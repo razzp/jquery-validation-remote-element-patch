@@ -34,7 +34,8 @@
     "scripts": {
         "build": "npm run biome && rimraf dist && rollup --config && npm run types",
         "types": "rimraf types && tsc --project tsconfig.types.json && api-extractor run --local --verbose",
-        "biome": "biome check --write"
+        "biome": "biome check --write",
+        "release": "release-it"
     },
     "devDependencies": {
         "@biomejs/biome": "2.3.6",
