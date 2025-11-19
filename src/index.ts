@@ -13,23 +13,35 @@
  */
 
 /**
+ * An object containing information that is included in the `onInvalid` callback.
+ *
+ * @public
+ */
+interface PatchOnInvalidInfo<T extends Element> {
+    /**
+     * The element that triggered validation.
+     */
+    element: T;
+    /**
+     * The form that failed validation.
+     */
+    form: HTMLFormElement;
+    /**
+     * The JQuery Validation instance for the form.
+     */
+    $validator: JQueryValidation.Validator;
+}
+
+/**
  * An optional configuration object for `patch`.
  *
  * @public
  */
-interface PatchOptions {
+interface PatchOptions<T extends Element> {
     /**
      * Function to call if a form fails validation.
-     *
-     * @param event - The event object related to the remote element.
-     * @param form - The form that failed validation.
-     * @param $validator - The JQuery Validator instance for the form.
      */
-    onInvalid?: (
-        event: Event,
-        form: HTMLFormElement,
-        $validator: JQueryValidation.Validator,
-    ) => void;
+    onInvalid?: (info: PatchOnInvalidInfo<T>) => void;
     /**
      * An `AbortSignal` that can be used to undo the patch.
      */
@@ -77,7 +89,7 @@ function patch(
                     form.submit();
                 } else {
                     $validator.focusInvalid();
-                    onInvalid?.(event, form, $validator);
+                    onInvalid?.({ element, form, $validator });
                 }
             },
             { ...(signal ? { signal } : {}) },
