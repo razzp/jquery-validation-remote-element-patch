@@ -5,11 +5,18 @@
 ```ts
 
 // @public
-export function patch(element: HTMLButtonElement | HTMLInputElement | HTMLFieldSetElement, options?: PatchOptions): void;
+export function patch<T extends HTMLButtonElement | HTMLInputElement>(element: T, options?: PatchOptions<T>): void;
 
 // @public
-export interface PatchOptions {
-    onInvalid?: (event: Event, form: HTMLFormElement, $validator: JQueryValidation.Validator) => void;
+export interface PatchOnInvalidInfo<T extends Element> {
+    $validator: JQueryValidation.Validator;
+    element: T;
+    form: HTMLFormElement;
+}
+
+// @public
+export interface PatchOptions<T extends Element> {
+    onInvalid?: (info: PatchOnInvalidInfo<T>) => void;
     signal?: AbortSignal;
 }
 
