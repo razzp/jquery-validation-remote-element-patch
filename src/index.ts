@@ -13,23 +13,35 @@
  */
 
 /**
+ * An object containing information that is included in the `onInvalid` callback.
+ *
+ * @public
+ */
+interface PatchOnInvalidInfo<T extends Element> {
+    /**
+     * The element that triggered validation.
+     */
+    element: T;
+    /**
+     * The form that failed validation.
+     */
+    form: HTMLFormElement;
+    /**
+     * The JQuery Validation instance for the form.
+     */
+    $validator: JQueryValidation.Validator;
+}
+
+/**
  * An optional configuration object for `patch`.
  *
  * @public
  */
-interface PatchOptions {
+interface PatchOptions<T extends Element> {
     /**
      * Function to call if a form fails validation.
-     *
-     * @param event - The event object related to the remote element.
-     * @param form - The form that failed validation.
-     * @param $validator - The JQuery Validator instance for the form.
      */
-    onInvalid?: (
-        event: Event,
-        form: HTMLFormElement,
-        $validator: JQueryValidation.Validator,
-    ) => void;
+    onInvalid?: (info: PatchOnInvalidInfo<T>) => void;
     /**
      * An `AbortSignal` that can be used to undo the patch.
      */
@@ -43,30 +55,26 @@ interface PatchOptions {
  *
  * @public
  */
-function patch(
-    element: HTMLButtonElement | HTMLInputElement | HTMLFieldSetElement,
-    options?: PatchOptions,
+function patch<T extends HTMLButtonElement | HTMLInputElement>(
+    element: T,
+    options?: PatchOptions<T>,
 ): void {
     const { onInvalid, signal } = { ...options };
-    const form = element.form;
 
-    // Bail out if we need to.
-    if (signal?.aborted || !form) return;
+    // Wrap in a JQuery ready function to avoid race conditions.
+    $(() => {
+        // If the element itself doesn't have a `form` attribute, see if it has
+        // an ancestor `<fieldset>` element that does, and use that instead.
+        const form = element.form ?? element.closest('fieldset')?.form;
 
-    if (element instanceof HTMLFieldSetElement) {
-        // Element is a field set, so call this function recursively for each nested
-        // input or button element that would trigger a form submit event.
+        // If there's no form, or a provided signal is aborted, bail out.
+        if (signal?.aborted || !form) return;
 
-        for (const child of element.querySelectorAll<HTMLButtonElement | HTMLInputElement>(
-            'input[type="submit"], button:not([type="button"])',
-        )) {
-            patch(child, options);
-        }
-    } else {
-        // Element is a button or input, so grab the validator instance, and set up
-        // an event listener so we can programmatically trigger validation.
+        // Grab the validator instance for the form.
+        const $validator = $(form).data('validator');
 
-        const $validator = $(form).data('validator') as JQueryValidation.Validator;
+        // No validator attached, so bail out.
+        if (!$validator) return;
 
         element.addEventListener(
             'click',
@@ -76,13 +84,14 @@ function patch(
                 if ($validator.form()) {
                     form.submit();
                 } else {
+                    // Mimic the default behaviour of JQuery Validation.
                     $validator.focusInvalid();
-                    onInvalid?.(event, form, $validator);
+                    onInvalid?.({ element, form, $validator });
                 }
             },
             { ...(signal ? { signal } : {}) },
         );
-    }
+    });
 }
 
-export { patch, type PatchOptions };
+export { patch, type PatchOnInvalidInfo, type PatchOptions };

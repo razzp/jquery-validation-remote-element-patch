@@ -9,6 +9,7 @@ https://github.com/jquery-validation/jquery-validation/pull/2521
 
 - [Installation](#installation)
 - [Usage](#usage)
+- [Notes](#notes)
 - [License](#license)
 
 ## Installation
@@ -21,7 +22,7 @@ npm i jquery-validation-remote-element-patch
 
 Import using CommonJS or ESM:
 
-```ts
+```js
 // ESM
 import { patch } from 'jquery-validation-remote-element-patch';
 
@@ -31,31 +32,41 @@ const { patch } = require('jquery-validation-remote-element-patch');
 
 Apply the patch:
 
-```ts
-const element = document.querySelector('.remote');
+```js
+const element = document.querySelector('.btn');
 
 patch(element);
 ```
 
 Apply the patch with optional arguments:
 
-```ts
-const element = document.querySelector('.remote');
+```js
+const element = document.querySelector('.btn');
 const controller = new AbortController();
 
 patch(element, {
-    onInvalid: (event, form, $validator) => {
+    onInvalid: ({element, form, $validator}) => {
         // Called after the form fails validation.
 
-        // event - The event object related to the remote element.
+        // element - The that triggered validation.
         // form - The form that failed validation.
-        // $validator - The JQuery Validator instance for the form.
+        // $validator - The JQuery Validation instance for the form.
     },
     signal: controller.signal, // An `AbortSignal` that can be used to undo the patch.
 });
 
 // Undo later
 controller.abort();
+```
+
+## Notes
+
+It is also valid to have the remote element inside a `<fieldset>`, which has a `form` attribute rather than the element itself.
+
+```html
+<fieldset form="formId">
+    <input type="submit" />
+</fieldset>
 ```
 
 ## License
