@@ -1,6 +1,6 @@
 {
     "name": "jquery-validation-remote-element-patch",
-    "version": "1.0.0",
+    "version": "1.1.0",
     "description": "A quick and dirty patch for enabling elements that are outside <form> elements, but linked via the form HTML attribute, to still trigger JQuery Validation.",
     "keywords": [
         "jquery",
